@@ -12,6 +12,13 @@ struct Second_FiddleApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+				.onAppear {
+						   // restore CSV file on launch
+						   // this assumes your ContentView struct has this method available
+						   DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+							   NotificationCenter.default.post(name: .init("RestoreCSV"), object: nil)
+						   }
+					   }
         }
     }
 }
