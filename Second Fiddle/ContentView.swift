@@ -15,6 +15,7 @@ struct Event: Identifiable, Hashable {
 	let perfNo: String
 	let name: String
 	let date: String
+	let season: String
 }
 
 struct ContentView: View {
@@ -36,20 +37,26 @@ struct ContentView: View {
 				) { result in
 					switch result {
 					case .success(let url):
-						do {
+						if url.startAccessingSecurityScopedResource() {
+							defer { url.stopAccessingSecurityScopedResource() }
+							
 							loadCSV(from: url)
 							csvFileURL = url
-
-							// Save bookmark for persistence
-							let bookmarkData = try url.bookmarkData(
-								options: .withSecurityScope,
-								includingResourceValuesForKeys: nil,
-								relativeTo: nil
-							)
-							UserDefaults.standard.set(bookmarkData, forKey: csvBookmarkKey)
-						} catch {
-							print("Error saving bookmark: \(error)")
+							
+							do {
+								let bookmarkData = try url.bookmarkData(
+									options: .withSecurityScope,
+									includingResourceValuesForKeys: nil,
+									relativeTo: nil
+								)
+								UserDefaults.standard.set(bookmarkData, forKey: csvBookmarkKey)
+							} catch {
+								print("Error saving bookmark: \(error)")
+							}
+						} else {
+							print("Failed to access security-scoped resource")
 						}
+						
 					case .failure(let error):
 						print("File load error: \(error)")
 					}
@@ -58,7 +65,7 @@ struct ContentView: View {
 				Text(csvFileURL?.path ?? "No data source selected")
 					.font(.caption)
 					.foregroundColor(.secondary)
-//					.padding(.bottom, 4)
+				//					.padding(.bottom, 4)
 					.lineLimit(1)
 					.truncationMode(.middle)
 				
@@ -92,7 +99,7 @@ struct ContentView: View {
 								VStack(alignment: .leading) {
 									Text(event.name)
 										.font(.headline)
-									Text("perf_no: \(event.perfNo), \(event.date)")
+									Text("perf_no: \(event.perfNo), \(event.date), \(event.season)")
 										.font(.caption)
 										.foregroundColor(.secondary)
 								}
@@ -103,7 +110,7 @@ struct ContentView: View {
 					}
 				}
 			}
-			.frame(minHeight: 300)
+			.frame(minHeight: 150)
 			
 			Divider()
 			
@@ -118,50 +125,83 @@ struct ContentView: View {
 				}
 				.padding(.top, 8)
 				.keyboardShortcut("c", modifiers: [.command]) // ⌘C
-
+				
 			}
 			
 			ScrollView {
 				Text(generatedSQL)
 					.font(.system(.body, design: .monospaced))
 					.padding()
+					.frame(minHeight: 100)
 					.frame(maxWidth: .infinity, alignment: .leading)
+					.textSelection(.enabled)
 			}
-//			.background(Color(.secondarySystemBackground))
+			//			.background(Color(.secondarySystemBackground))
 			.cornerRadius(8)
 			.padding()
+			.selectionDisabled(false)
 			
 			
 		}
 		.onAppear {
-				restoreCSVIfAvailable()
-			}
+			restoreCSVIfAvailable()
+		}
 		.padding()
 	}
 	
 	var filteredEvents: [Event] {
-		if searchText.isEmpty {
+		let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+		
+		guard !trimmed.isEmpty else {
 			return events
-		} else {
+		}
+		
+		// Scoped season search
+		if trimmed.lowercased().hasPrefix("season:") {
+			let targetSeason = trimmed.dropFirst("season:".count).trimmingCharacters(in: .whitespaces)
 			return events.filter {
-				$0.name.localizedCaseInsensitiveContains(searchText)
+				$0.season.localizedCaseInsensitiveContains(targetSeason)
 			}
 		}
+		
+		// Determine if wildcards are used
+		if trimmed.contains("*") || trimmed.contains("?") {
+			let pattern = wildcardToRegex(trimmed)
+			return events.filter {
+				$0.name.range(of: pattern, options: [.regularExpression, .caseInsensitive]) != nil ||
+				$0.season.range(of: pattern, options: [.regularExpression, .caseInsensitive]) != nil
+			}
+		} else {
+			// Plain substring match (faster, friendlier)
+			return events.filter {
+				$0.name.localizedCaseInsensitiveContains(trimmed) ||
+				$0.season.localizedCaseInsensitiveContains(trimmed)
+			}
+		}
+	}
+	
+	func wildcardToRegex(_ pattern: String) -> String {
+		// Escape all regex characters, then convert wildcards
+		let escaped = NSRegularExpression.escapedPattern(for: pattern)
+		let regexPattern = escaped
+			.replacingOccurrences(of: "\\*", with: ".*")   // * → match any characters
+			.replacingOccurrences(of: "\\?", with: ".")    // ? → match single character
+		return "^" + regexPattern + "$"                    // anchor to full match
 	}
 	
 	var generatedSQL: String {
 		let perfNos = selectedEvents.map { $0.perfNo }.joined(separator: ", ")
 		guard !perfNos.isEmpty else { return "-- Select events to generate SQL" }
-
+		
 		return """
-		SELECT DISTINCT a.customer_no 
-		FROM V_CUSTOMER_WITH_PRIMARY_GROUP a WITH(NOLOCK) 
-		JOIN(
-			SELECT a1.customer_no 
-			FROM vs_ticket_history a1 WITH (NOLOCK) 
-			WHERE a1.perf_no IN(\(perfNos))) AS e ON e.customer_no = a.customer_no 
-		WHERE 1 = 1
-		"""
+  SELECT DISTINCT a.customer_no 
+  FROM V_CUSTOMER_WITH_PRIMARY_GROUP a WITH(NOLOCK) 
+  JOIN(
+   SELECT a1.customer_no 
+   FROM vs_ticket_history a1 WITH (NOLOCK) 
+   WHERE a1.perf_no IN(\(perfNos))) AS e ON e.customer_no = a.customer_no 
+  WHERE 1 = 1
+  """
 	}
 	
 	func restoreCSVIfAvailable() {
@@ -169,27 +209,35 @@ struct ContentView: View {
 			print("No saved bookmark.")
 			return
 		}
-
+		
 		var isStale = false
-
+		
 		do {
 			let resolvedURL = try URL(
 				resolvingBookmarkData: bookmarkData,
 				options: [.withSecurityScope],
 				bookmarkDataIsStale: &isStale
 			)
-
+			
 			if resolvedURL.startAccessingSecurityScopedResource() {
 				defer { resolvedURL.stopAccessingSecurityScopedResource() }
 				loadCSV(from: resolvedURL)
-				csvFileURL = resolvedURL // ✅ move this inside the same scope
+				csvFileURL = resolvedURL
 			} else {
 				print("Failed to access security-scoped resource")
 			}
-
+			
 			if isStale {
-				print("Bookmark is stale — consider re-saving it.")
+				print("Bookmark is stale — re-saving.")
+				// 🔁 Re-save fresh bookmark
+				let newBookmark = try resolvedURL.bookmarkData(
+					options: .withSecurityScope,
+					includingResourceValuesForKeys: nil,
+					relativeTo: nil
+				)
+				UserDefaults.standard.set(newBookmark, forKey: csvBookmarkKey)
 			}
+			
 		} catch {
 			print("Failed to resolve bookmark: \(error)")
 		}
@@ -197,15 +245,28 @@ struct ContentView: View {
 	
 	func loadCSV(from url: URL) {
 		do {
+			print("✅ Attempting to read file at \(url.path)")
 			let contents = try String(contentsOf: url)
+			print("✅ File read succeeded")
+			
 			let rows = contents.components(separatedBy: .newlines).dropFirst()
-			events = rows.compactMap { line in
+			events = rows.compactMap { (line) -> Event? in
 				let columns = line.components(separatedBy: ",")
-				guard columns.count >= 3 else { return nil }
-				return Event(perfNo: columns[0], name: columns[1], date: columns[2])
+				guard columns.count >= 4 else {
+					print("❌ Skipped malformed row: \(line)")
+					return nil
+				}
+				
+				return Event(
+					perfNo: columns[0].trimmingCharacters(in: .whitespaces),
+					name: columns[1].trimmingCharacters(in: .whitespaces),
+					date: columns[2].trimmingCharacters(in: .whitespaces),
+					season: columns[3].trimmingCharacters(in: .whitespaces)
+				)
 			}
+			print("✅ Loaded \(events.count) events")
 		} catch {
-			print("Failed to load CSV: \(error)")
+			print("❌ Failed to load CSV: \(error)")
 		}
 	}
 }
@@ -213,10 +274,3 @@ struct ContentView: View {
 #Preview {
 	ContentView()
 }
-
-
-
-
-
-
-
