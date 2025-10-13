@@ -23,7 +23,7 @@ struct HelpView: View {
 
                     Text("🔍 Searching")
                         .font(.headline)
-                    Text("Use the search bar to filter events by title.")
+                    Text("Use the search bar to filter events by name or season. Supports wildcards (* and ?) and scoped searches (e.g., 'season:2024').")
 
                     Text("☑️ Selecting Events")
                         .font(.headline)
@@ -31,7 +31,7 @@ struct HelpView: View {
 
                     Text("📝 SQL Output")
                         .font(.headline)
-                    Text("As you select events, a SQL query is automatically generated. Use the 'Copy to Clipboard' button to copy it the results.")
+                    Text("As you select events, a SQL query is automatically generated. Use the 'Copy to Clipboard' button to copy the results.")
                 }
 
                 Divider().padding(.vertical)

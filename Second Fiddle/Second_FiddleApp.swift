@@ -15,15 +15,8 @@ struct Second_FiddleApp: App {
 	var body: some Scene {
 		WindowGroup {
 			ContentView()
-				.onAppear {
-					// restore CSV file on launch
-					// this assumes your ContentView struct has this method available
-					DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-						NotificationCenter.default.post(name: .init("RestoreCSV"), object: nil)
-					}
-				}
 				.frame(minWidth: 600, minHeight: 500)
-			
+
 		}
 		.commands {
 			CommandGroup(replacing: .appInfo) {
@@ -44,7 +37,7 @@ struct Second_FiddleApp: App {
 		if aboutWindow == nil {
 			let hostingView = NSHostingView(rootView: AboutView())
 			let window = NSWindow(
-				contentRect: NSRect(x: 0, y: 0, width: 320, height: 240),
+				contentRect: NSRect(x: 0, y: 0, width: 250, height: 250),
 				styleMask: [.titled, .closable],
 				backing: .buffered,
 				defer: false

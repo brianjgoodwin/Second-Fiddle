@@ -243,20 +243,40 @@ struct ContentView: View {
 		}
 	}
 	
+	func parseCSVLine(_ line: String) -> [String] {
+		var result: [String] = []
+		var currentField = ""
+		var insideQuotes = false
+
+		for char in line {
+			if char == "\"" {
+				insideQuotes.toggle()
+			} else if char == "," && !insideQuotes {
+				result.append(currentField)
+				currentField = ""
+			} else {
+				currentField.append(char)
+			}
+		}
+		result.append(currentField)
+		return result
+	}
+
 	func loadCSV(from url: URL) {
 		do {
 			print("✅ Attempting to read file at \(url.path)")
 			let contents = try String(contentsOf: url)
 			print("✅ File read succeeded")
-			
+
 			let rows = contents.components(separatedBy: .newlines).dropFirst()
 			events = rows.compactMap { (line) -> Event? in
-				let columns = line.components(separatedBy: ",")
+				guard !line.isEmpty else { return nil }
+				let columns = parseCSVLine(line)
 				guard columns.count >= 4 else {
 					print("❌ Skipped malformed row: \(line)")
 					return nil
 				}
-				
+
 				return Event(
 					perfNo: columns[0].trimmingCharacters(in: .whitespaces),
 					name: columns[1].trimmingCharacters(in: .whitespaces),
