@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		D31EC8952ECAA9E800041664 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = D31EC8942ECAA9E800041664 /* README.md */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		D367343E2E0DCF6700C0C8ED /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -24,6 +28,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		D31EC8942ECAA9E800041664 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		D367342F2E0DCF6500C0C8ED /* Second Fiddle.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Second Fiddle.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		D367343D2E0DCF6700C0C8ED /* Second FiddleTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Second FiddleTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		D36734472E0DCF6700C0C8ED /* Second FiddleUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Second FiddleUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -75,6 +80,7 @@
 		D36734262E0DCF6500C0C8ED = {
 			isa = PBXGroup;
 			children = (
+				D31EC8942ECAA9E800041664 /* README.md */,
 				D36734312E0DCF6500C0C8ED /* Second Fiddle */,
 				D36734402E0DCF6700C0C8ED /* Second FiddleTests */,
 				D367344A2E0DCF6700C0C8ED /* Second FiddleUITests */,
@@ -212,6 +218,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D31EC8952ECAA9E800041664 /* README.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -397,7 +404,7 @@
 				CODE_SIGN_ENTITLEMENTS = "Second Fiddle/Second_Fiddle.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				DEVELOPMENT_TEAM = Q6KW3YY9SU;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
@@ -408,7 +415,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = "Brian.Second-Fiddle";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -425,7 +432,7 @@
 				CODE_SIGN_ENTITLEMENTS = "Second Fiddle/Second_Fiddle.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				DEVELOPMENT_TEAM = Q6KW3YY9SU;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
@@ -436,7 +443,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = "Brian.Second-Fiddle";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
